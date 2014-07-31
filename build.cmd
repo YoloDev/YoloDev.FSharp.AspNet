@@ -24,5 +24,11 @@ CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
 cd src\FSharpSupport
-kpm --lib "%~dp0\packages\FSharpSupport\lib\net45" build
+
+setlocal
+SET ERRORLEVEL=
+call klr --lib "%HOME%\.klr;%HOME%\.klr\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+exit /b %ERRORLEVEL%
+endlocal
+
 echo DONE
