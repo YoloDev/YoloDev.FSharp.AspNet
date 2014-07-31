@@ -33,15 +33,27 @@ cd src\FSharpSupport
 call kpm restore
 
 SET ERRORLEVEL=
+REM First build to make sure source is valid
 REM echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
 call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
-move bin\debug\net45\FSharpSupport.dll %~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.dll > nul
-move bin\debug\net45\FSharpSupport.pdb %~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.pdb > nul
+IF NOT "%ERRORLEVEL%" == "0" goto end
 
-REM build again to make sure it works
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+move bin\debug\net45\FSharpSupport.dll obj\pass2\FSharpSupport.dll > nul
+move bin\debug\net45\FSharpSupport.pdb obj\pass2\FSharpSupport.pdb > nul
 
-IF NOT "%APPVEYOR_REPO_NAME%" == "master" goto wrongbranch
+REM build again to make sure it fills the contracts
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass2" "Microsoft.Framework.PackageManager" build
+IF NOT "%ERRORLEVEL%" == "0" goto end
+
+move bin\debug\net45\FSharpSupport.dll obj\pass3\FSharpSupport.dll > nul
+move bin\debug\net45\FSharpSupport.pdb obj\pass3\FSharpSupport.pdb > nul
+
+REM build again to make sure it constructs something that fills the contracts
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass3" "Microsoft.Framework.PackageManager" build
+IF NOT "%ERRORLEVEL%" == "0" goto end
+
+IF NOT "%APPVEYOR_REPO_BRANCH%" == "master" goto wrongbranch
+IF NOT "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" goto pullreq
 IF "%NUGET_SOURCE%" == "" goto end
 .nuget\NuGet.exe push bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.nupkg %NUGET_API_KEY% -Source %NUGET_SOURCE%
 
@@ -51,6 +63,11 @@ goto end
 
 :wrongbranch
 echo Skipping commit since branch = %APPVEYOR_REPO_NAME%
+goto end
+
+:pullreq
+echo Skipping commit since it's a pull request
+goto end
 
 :end
 exit /b %ERRORLEVEL%
