@@ -23,11 +23,14 @@ CALL packages\KoreBuild\build\kvm upgrade -svr50 -x86
 REM CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
+for /f "usebackq tokens=*" %%a in (`where kpm`) do set KPM_PATH=%%a
+for %%F in (%KPM_PATH%) do set KPM_DIR=%%~dpF
+
 cd src\FSharpSupport
 
 SET ERRORLEVEL=
-echo klr --lib "%USERPROFILE%\.kre;%USERPROFILE%\.kre\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
-call klr --lib "%USERPROFILE%\.kre;%USERPROFILE%\.kre\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
 exit /b %ERRORLEVEL%
 
 echo DONE
