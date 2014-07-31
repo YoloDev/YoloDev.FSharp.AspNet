@@ -33,8 +33,12 @@ cd src\FSharpSupport
 call kpm restore
 
 SET ERRORLEVEL=
-echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+REM echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
 call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
-exit /b %ERRORLEVEL%
+move bin\debug\net45\FSharpSupport.dll %~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.dll > nul
+move bin\debug\net45\FSharpSupport.pdb %~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.pdb > nul
 
-echo DONE
+REM build again to make sure it works
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+
+exit /b %ERRORLEVEL%
