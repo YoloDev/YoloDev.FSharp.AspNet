@@ -1,0 +1,23 @@
+{
+  "version": "0.1-alpha-*",
+  "dependencies": {
+    "FSharpSupport": "",
+    "Microsoft.Framework.Runtime": "1.0.0-*",
+    "FSharp.Compiler.Service": "0.0.58"
+  },
+
+  "code": ["provider.fs"],
+
+  "language": {
+    "name": "F#",
+    "assembly": "FSharpSupport",
+    "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
+  },
+
+  "frameworks" : {
+    "net45" : { 
+      "dependencies": {
+      }
+    }
+  }
+}
