@@ -57,9 +57,11 @@ IF NOT "%ERRORLEVEL%" == "0" goto end
 IF NOT "%APPVEYOR_REPO_BRANCH%" == "master" goto wrongbranch
 IF NOT "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" goto pullreq
 IF "%NUGET_SOURCE%" == "" goto end
+echo Publishing bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.nupkg
 .nuget\NuGet.exe push bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.nupkg %NUGET_API_KEY% -Source %NUGET_SOURCE%
 
 IF "%SYMBOL_SOURCE%" == "" goto end
+echo Publishing bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.symbols.nupkg
 .nuget\NuGet.exe push bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.symbols.nupkg %SYMBOL_API_KEY% -Source %SYMBOL_SOURCE%
 goto end
 
