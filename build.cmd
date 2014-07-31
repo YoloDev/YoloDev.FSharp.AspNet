@@ -1,4 +1,4 @@
-@echo off
+REM @echo off
 cd %~dp0
 
 SETLOCAL
@@ -23,4 +23,6 @@ CALL packages\KoreBuild\build\kvm upgrade -svr50 -x86
 CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
+cd src\FSharpSupport
+kpm --lib "%~dp0\packages\FSharpSupport\lib\net45" build
 echo DONE
