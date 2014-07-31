@@ -27,7 +27,7 @@ for /f "usebackq tokens=*" %%a in (`where kpm`) do set KPM_PATH=%%a
 for %%F in (%KPM_PATH%) do set KPM_DIR=%%~dpF
 
 cd src\FSharpSupport
-kpm restore
+call kpm restore
 
 SET ERRORLEVEL=
 echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
