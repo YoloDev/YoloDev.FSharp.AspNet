@@ -32,23 +32,25 @@ for %%F in (%KPM_PATH%) do set KPM_DIR=%%~dpF
 cd src\FSharpSupport
 call kpm restore
 
+mkdir obj\pass1
+mkdir obj\pass2
+mkdir obj\pass3
+
 SET ERRORLEVEL=
 REM First build to make sure source is valid
-REM echo klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
+move %~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.dll obj\pass1\FSharpSupport.dll > nul
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass1" "Microsoft.Framework.PackageManager" build
 IF NOT "%ERRORLEVEL%" == "0" goto end
 
+REM build again to make sure it fills the contracts
 move bin\debug\net45\FSharpSupport.dll obj\pass2\FSharpSupport.dll > nul
 move bin\debug\net45\FSharpSupport.pdb obj\pass2\FSharpSupport.pdb > nul
-
-REM build again to make sure it fills the contracts
 call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass2" "Microsoft.Framework.PackageManager" build
 IF NOT "%ERRORLEVEL%" == "0" goto end
 
+REM build again to make sure it constructs something that fills the contracts
 move bin\debug\net45\FSharpSupport.dll obj\pass3\FSharpSupport.dll > nul
 move bin\debug\net45\FSharpSupport.pdb obj\pass3\FSharpSupport.pdb > nul
-
-REM build again to make sure it constructs something that fills the contracts
 call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass3" "Microsoft.Framework.PackageManager" build
 IF NOT "%ERRORLEVEL%" == "0" goto end
 
