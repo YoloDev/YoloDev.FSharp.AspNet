@@ -1,5 +1,7 @@
 {
   "version": "0.1-alpha-*",
+  "authors": ["Alxandr"],
+  "description": "F# Support for vNext",
   "dependencies": {
     "Microsoft.Framework.Runtime": "1.0.0-*",
     "FSharp.Compiler.Service": "0.0.58",
