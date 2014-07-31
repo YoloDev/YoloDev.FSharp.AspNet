@@ -1,7 +1,6 @@
 {
   "version": "0.1-alpha-*",
   "dependencies": {
-    "FSharpSupport": "",
     "Microsoft.Framework.Runtime": "1.0.0-*",
     "FSharp.Compiler.Service": "0.0.58"
   },
