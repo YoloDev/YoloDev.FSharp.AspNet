@@ -1,4 +1,4 @@
-@echo on
+@echo off
 cd %~dp0
 
 SETLOCAL
@@ -17,13 +17,16 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 :restore
 .nuget\NuGet.exe install FSharpSupport -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
+.nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 
 IF "%SKIP_KRE_INSTALL%"=="1" goto run
 CALL packages\KoreBuild\build\kvm upgrade -svr50 -x86
 REM CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
+REM Get the path of `kpm` and store it as KPM_PATH
 for /f "usebackq tokens=*" %%a in (`where kpm`) do set KPM_PATH=%%a
+REM Get the dir name of `KPM_PATH`
 for %%F in (%KPM_PATH%) do set KPM_DIR=%%~dpF
 
 cd src\FSharpSupport

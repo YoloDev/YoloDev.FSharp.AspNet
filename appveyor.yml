@@ -8,7 +8,8 @@ init:
 test: off
 
 build_script:
-  #- set BUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% #temp
+  - set K_BUILD_VERSION=000%APPVEYOR_BUILD_NUMBER% #temp
+  - set K_BUILD_VERSION=%K_BUILD_VERSION:~-4%
   - build.cmd
 
 environment:
