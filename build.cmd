@@ -41,4 +41,11 @@ move bin\debug\net45\FSharpSupport.pdb %~dp0\packages\FSharpSupport\lib\net45\FS
 REM build again to make sure it works
 call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
 
+IF "%NUGET_SOURCE%" == "" goto end
+.nuget\NuGet.exe push bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.nupkg %NUGET_API_KEY% -Source %NUGET_SOURCE%
+
+IF "%SYMBOL_SOURCE%" == "" goto end
+.nuget\NuGet.exe push bin\debug\FSharpSupport.0.1-alpha-%K_BUILD_VERSION%.symbols.nupkg %SYMBOL_API_KEY% -Source %SYMBOL_SOURCE%
+
+:end
 exit /b %ERRORLEVEL%
