@@ -20,15 +20,13 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 
 IF "%SKIP_KRE_INSTALL%"=="1" goto run
 CALL packages\KoreBuild\build\kvm upgrade -svr50 -x86
-CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
+REM CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
 cd src\FSharpSupport
 
-setlocal
 SET ERRORLEVEL=
 call klr --lib "%HOME%\.klr;%HOME%\.klr\lib\Microsoft.Framework.PackageManager;%~dp0\packages\FSharpSupport\lib\net45" "Microsoft.Framework.PackageManager" build
 exit /b %ERRORLEVEL%
-endlocal
 
 echo DONE
