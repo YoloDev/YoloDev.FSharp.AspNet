@@ -26,3 +26,4 @@ nuget.exe
 *.ipch
 *.sln.ide
 .c9
+lib/Fowler
