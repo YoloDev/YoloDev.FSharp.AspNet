@@ -96,12 +96,10 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
             let refs = refs |> List.choose id
             let tempFiles = tempFiles |> List.choose id
 
-            let rec appender refs acc =
-                match refs with
-                | [] -> List.rev acc
-                | h :: t -> appender t ("-r" :: h :: acc)
+            let refs =
+                refs
+                |> List.map (fun r -> "-r:" + r)
 
-            let refs = appender refs []
             refs @ compilerArgs, tempFiles
         
         let compilerArgsArr = ("fsc.exe" :: (compilerArgs |> List.rev)) |> Array.ofList
