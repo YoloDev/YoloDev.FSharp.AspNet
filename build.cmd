@@ -1,4 +1,4 @@
-@echo on
+@echo off
 cd %~dp0
 
 SETLOCAL
@@ -31,34 +31,39 @@ for %%F in (%KPM_PATH%) do set KPM_DIR=%%~dpF
 
 cd "%~dp0src\FSharpSupport"
 call kpm restore
+REM @echo on
 
+rd /s /q "%~dp0obj"
 mkdir "%~dp0obj\pass0"
 mkdir "%~dp0obj\pass1"
 mkdir "%~dp0obj\pass2"
 mkdir "%~dp0obj\pass3"
 
-SET BOOTSTRAPPED="0"
+SET BOOTSTRAPPED=0
+copy "%~dp0packages\FSharpSupport\lib\net45\FSharpSupport.dll" "%~dp0obj\pass1\FSharpSupport.dll" > nul
 
 :build
 SET ERRORLEVEL=
 REM First build to make sure source is valid
-move "%~dp0\packages\FSharpSupport\lib\net45\FSharpSupport.dll" "%~dp0src\FSharpSupport\obj\pass1\FSharpSupport.dll" > nul
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass1" "Microsoft.Framework.PackageManager" build
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0obj\pass1" "Microsoft.Framework.PackageManager" build
+REM @echo on
 IF NOT "%ERRORLEVEL%" == "0" goto bootstrap
 
 REM build again to make sure it fills the contracts
-move "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0src\FSharpSupport\obj\pass2\FSharpSupport.dll" > nul
-move "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0src\FSharpSupport\obj\pass2\FSharpSupport.pdb" > nul
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass2" "Microsoft.Framework.PackageManager" build
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0obj\pass2\FSharpSupport.dll" > nul
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0obj\pass2\FSharpSupport.pdb" > nul
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0obj\pass2" "Microsoft.Framework.PackageManager" build
+REM @echo on
 IF NOT "%ERRORLEVEL%" == "0" goto end
 
 REM build again to make sure it constructs something that fills the contracts
-move "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0src\FSharpSupport\obj\pass3\FSharpSupport.dll" > nul
-move "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0src\FSharpSupport\obj\pass3\FSharpSupport.pdb" > nul
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass3" "Microsoft.Framework.PackageManager" build
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0obj\pass3\FSharpSupport.dll" > nul
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0obj\pass3\FSharpSupport.pdb" > nul
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0obj\pass3" "Microsoft.Framework.PackageManager" build
+REM @echo on
 IF NOT "%ERRORLEVEL%" == "0" goto end
 
-IF "%K_BUILD_VERSION%" == "" goto end
+IF "%K_BUILD_VERSION%" == "" goto noversion
 IF NOT "%APPVEYOR_REPO_BRANCH%" == "master" goto wrongbranch
 IF NOT "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" goto pullreq
 IF "%NUGET_SOURCE%" == "" goto end
@@ -78,23 +83,31 @@ goto end
 echo Skipping commit since it's a pull request
 goto end
 
+:noversion
+echo Skipping commit since no version was provided
+goto end
+
 :bootstrap
 IF NOT "%BOOTSTRAPPED%" == "0" goto end
 set BOOTSTRAPPED="1"
 echo Fowler prolly broke my code -.-
 echo Bootstrapping
+rd /s /q "%~dp0lib\Fowler"
 mkdir "%~dp0lib"
 git clone https://github.com/davidfowl/vNextLanguageSupport.git "%~dp0lib\Fowler"
 cd "%~dp0lib\Fowler\src\FSharpSupport"
 call kpm restore
 
 SET ERRORLEVEL=
-kpm build
+call kpm build
 IF NOT "%ERRORLEVEL%" == "0" goto end
-move "%~dp0lib\Fowler\src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0src\FSharpSupport\obj\pass0\FSharpSupport.dll" > nul
-move "%~dp0lib\Fowler\src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0src\FSharpSupport\obj\pass0\FSharpSupport.pdb" > nul
+move /Y "%~dp0lib\Fowler\src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0obj\pass0\FSharpSupport.dll" > nul
+move /Y "%~dp0lib\Fowler\src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0obj\pass0\FSharpSupport.pdb" > nul
 cd "%~dp0src\FSharpSupport"
-call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0\src\FSharpSupport\obj\pass0" "Microsoft.Framework.PackageManager" build
+call klr --lib "%KPM_DIR%;%KPM_DIR%\lib\Microsoft.Framework.PackageManager;%~dp0obj\pass0" "Microsoft.Framework.PackageManager" build
+REM @echo on
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.dll" "%~dp0obj\pass1\FSharpSupport.dll" > nul
+move /Y "%~dp0src\FSharpSupport\bin\debug\net45\FSharpSupport.pdb" "%~dp0obj\pass1\FSharpSupport.pdb" > nul
 goto build
 
 :end
