@@ -126,7 +126,8 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
                 | _ -> None)
             |> Array.map (fun e -> e.ToString ())
 
-        new DiagnosticResult (true, warnings, errors) :> IDiagnosticResult
+        let success = match exitCode with | 0 -> true | _ -> false
+        new DiagnosticResult (success, warnings, errors) :> IDiagnosticResult
 
     interface IMetadataReference with
         member x.Name with get () = project.Name
