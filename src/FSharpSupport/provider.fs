@@ -12,7 +12,7 @@ module Helpers =
 
 open Helpers
 
-type internal FSharpProjectReference(project: Project, targetFramework: FrameworkName, configuration: string, projectExport: ILibraryExport, watcher: IFileWatcher) =
+type internal FSharpProjectReference(project: Project, targetFramework: FrameworkName, configuration: string, incomingReferences: IMetadataReference seq, watcher: IFileWatcher) =
     
     let param name value = sprintf "--%s:%s" name value
 
@@ -88,7 +88,7 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
         // Each IMetadaReference maps to an assembly
         let compilerArgs, tempFiles =
             let refs, tempFiles =
-                projectExport.MetadataReferences
+                incomingReferences
                 |> List.ofSeq
                 |> List.map convertRef
                 |> List.unzip
@@ -184,5 +184,5 @@ type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
 
     interface IProjectReferenceProvider with
 
-        member x.GetProjectReference (project, targetFramework, configuration, projectExport) =
-            new FSharpProjectReference (project, targetFramework, configuration, projectExport, watcher) :> IMetadataProjectReference
+        member x.GetProjectReference (project, targetFramework, configuration, incomingReferences, incomingSourceReferences, outgoingReferences) =
+            new FSharpProjectReference (project, targetFramework, configuration, incomingReferences, watcher) :> IMetadataProjectReference
