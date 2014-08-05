@@ -34,11 +34,14 @@ module internal Compiler =
         let l = new obj ()
         lock l fn
 
-    let tprintf fmt = ignore // Printf.ksprintf System.Diagnostics.Trace.Write fmt
-    let tprintfn fmt = ignore //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
+    //let tprintf fmt = Printf.ksprintf System.Diagnostics.Trace.Write fmt
+    let tprintf _ = ignore
 
-    let getReferences (project: Project) targetFramework incomingReferences =
-        let name = project.Name
+    //let tprintfn fmt = Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
+    let tprintfn _ = ignore
+
+    let getReferences _ _ incomingReferences =
+        //let name = project.Name
 
         let makePath p = "C:\\" + p + ".dll"
 
@@ -142,7 +145,7 @@ module internal Compiler =
 
     let param name value = sprintf "--%s:%s" name value
 
-    let emit name sources refs outputPath emitPdb emitDocFile emitExe inMemory =
+    let emit name sources refs outputPath emitPdb emitDocFile emitExe _ =
         let outExt ext = Path.Combine [|outputPath; name + ext|]
         let outputDll = outExt (if emitExe then ".exe" else ".dll")
 
@@ -201,7 +204,7 @@ module internal Compiler =
         let success = match exitCode with | 0 -> true | _ -> false
         new DiagnosticResult (success, warnings, errors) :> IDiagnosticResult
 
-    let getProjectReference (project: Project) targetFramework configuration incomingReferences (watcher: IFileWatcher) =
+    let getProjectReference (project: Project) targetFramework _ incomingReferences (watcher: IFileWatcher) =
         let refs, refsMap = getReferences project targetFramework incomingReferences
         let fs = makeFs refsMap
 
@@ -216,7 +219,8 @@ module internal Compiler =
                 result)
 
         let getTempPath () =
-            Path.Combine(Path.GetTempPath (), project.Name, (System.Guid.NewGuid ()).ToString ())
+            let path = Path.GetTempPath() // typecheck warning, compiler thinks it might be mutated
+            Path.Combine(path, project.Name, (System.Guid.NewGuid ()).ToString ())
 
         let withTemp fn = fun () ->
             let path = getTempPath ()
@@ -264,5 +268,5 @@ type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
     
     interface IProjectReferenceProvider with
 
-        member x.GetProjectReference (project, targetFramework, configuration, incomingReferences, incomingSourceReferences, outgoingReferences) =
+        member x.GetProjectReference (project, targetFramework, configuration, incomingReferences, _, _) =
             Compiler.getProjectReference project targetFramework configuration incomingReferences watcher
