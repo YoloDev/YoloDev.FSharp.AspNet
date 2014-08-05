@@ -11,6 +11,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 module Helpers =
     let inline ni () = raise (new System.NotImplementedException ())
 
+[<NoEquality>]
 type internal MetadataReference =
 | FileMetadataReference of string
 | ImageMetadataReference of string * byte array
@@ -20,8 +21,8 @@ with
         with get () =
             match r with
             | FileMetadataReference f -> f
-            | ImageMetadataReference (p, a) -> p
-            | ProjectMetadataReference (p, a) -> p
+            | ImageMetadataReference (p, _) -> p
+            | ProjectMetadataReference (p, _) -> p
 
 [<CompilationRepresentationAttribute(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal MetadataReference =
@@ -33,8 +34,8 @@ module internal Compiler =
         let l = new obj ()
         lock l fn
 
-    let tprintf fmt = ignore // Printf.ksprintf System.Diagnostics.Trace.Write fmt
-    let tprintfn fmt = ignore //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
+    let tprintf fmt = ignore fmt // Printf.ksprintf System.Diagnostics.Trace.Write fmt
+    let tprintfn fmt = ignore fmt //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
 
     let getReferences (project: Project) targetFramework incomingReferences =
         let name = project.Name
@@ -66,13 +67,13 @@ module internal Compiler =
 
     let makeStream = function
         | FileMetadataReference f -> File.OpenRead f :> Stream
-        | ImageMetadataReference (p, a) -> new MemoryStream (a) :> Stream
-        | ProjectMetadataReference (p, a) -> let ms = new MemoryStream () in a ms; ms :> Stream
+        | ImageMetadataReference (_, a) -> new MemoryStream (a) :> Stream
+        | ProjectMetadataReference (_, a) -> let ms = new MemoryStream () in a ms; ms :> Stream
 
     let makeByteArray = function
         | FileMetadataReference f -> File.ReadAllBytes f
-        | ImageMetadataReference (p, a) -> a
-        | ProjectMetadataReference (p, a) -> use ms = new MemoryStream () in a ms; ms.ToArray ()
+        | ImageMetadataReference (_, a) -> a
+        | ProjectMetadataReference (_, a) -> use ms = new MemoryStream () in a ms; ms.ToArray ()
 
     let makeFs refs =
         let defaultFileSystem = Shim.FileSystem
@@ -100,7 +101,7 @@ module internal Compiler =
 
             // Implement the service related to temporary paths and file time stamps
             member fs.GetTempPathShim () = 
-                tprintfn "GetTempPathShim: ()"
+                tprintfn "GetTempPathShim: ()" ()
                 defaultFileSystem.GetTempPathShim ()
 
             member fs.GetLastWriteTimeShim name = 
@@ -219,7 +220,7 @@ module internal Compiler =
 
         let withTemp fn = fun () ->
             let path = getTempPath ()
-            Directory.CreateDirectory path
+            Directory.CreateDirectory path |> ignore
             let result = fn path
             Directory.Delete (path, true)
             result
