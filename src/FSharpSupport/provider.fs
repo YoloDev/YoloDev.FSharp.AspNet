@@ -2,64 +2,150 @@ namespace FSharpSupport
 
 open System.IO
 open System.Runtime.Versioning
-open System.Collections.Generic
 open Microsoft.Framework.Runtime
 open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.SimpleSourceCodeServices
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
 module Helpers =
     let inline ni () = raise (new System.NotImplementedException ())
 
+type internal MetadataReference =
+| FileMetadataReference of string
+| ImageMetadataReference of string * byte array
+| ProjectMetadataReference of string * (Stream -> unit)
+with
+    member r.VirtPath 
+        with get () =
+            match r with
+            | FileMetadataReference f -> f
+            | ImageMetadataReference (p, a) -> p
+            | ProjectMetadataReference (p, a) -> p
+
+[<CompilationRepresentationAttribute(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal MetadataReference =
+    let virtPath (p: MetadataReference) = p.VirtPath
+
 open Helpers
+module internal Compiler =
+    let lock fn =
+        let l = new obj ()
+        lock l fn
 
-type internal FSharpProjectReference(project: Project, targetFramework: FrameworkName, configuration: string, incomingReferences: IMetadataReference seq, watcher: IFileWatcher) =
-    
-    let param name value = sprintf "--%s:%s" name value
+    let tprintf fmt = ignore // Printf.ksprintf System.Diagnostics.Trace.Write fmt
+    let tprintfn fmt = ignore //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
 
-    let emit outputPath emitPdb emitDocFile emitExe inMemory =
-        //System.Diagnostics.Debugger.Launch () |> ignore
-        let tempBasePath = Path.Combine [|outputPath; project.Name; "obj"|]
+    let getReferences (project: Project) targetFramework incomingReferences =
+        let name = project.Name
 
-        let convertRef (r: IMetadataReference) =
+        let makePath p = "C:\\" + p + ".dll"
+
+        let (|>|) a b =
+            a, (b a)
+
+        incomingReferences
+        |> List.ofSeq
+        |> List.choose (fun (r: IMetadataReference) ->
             match r with
             // Skip this project
-            | _ when r.Name = (typeof<FSharpProjectReference>.Assembly.GetName ()).Name -> None, None
-
+            | _ when r.Name = (typeof<MetadataReference>.Assembly.GetName ()).Name -> None
+                
             // NuGet references
-            | :? IMetadataFileReference as r -> Some r.Path, None
+            | :? IMetadataFileReference as r -> Some (FileMetadataReference r.Path)
 
             // Assembly neutral references
-            | :? IMetadataEmbeddedReference as r ->
-                let tempEmbeddedPath = Path.Combine [|tempBasePath; r.Name + ".dll"|]
-                Directory.CreateDirectory (Path.GetDirectoryName tempEmbeddedPath) |> ignore
-
-                // Write the ANI to disk
-                File.WriteAllBytes (tempEmbeddedPath, r.Contents)
-                Some tempEmbeddedPath, Some tempEmbeddedPath
+            | :? IMetadataEmbeddedReference as r -> Some (ImageMetadataReference ((makePath r.Name), r.Contents))
 
             // Project references
-            | :? IMetadataProjectReference as r ->
-                let path = 
-                    let path = Path.Combine [|tempBasePath; r.Name + ".dll"|]
-                    Directory.CreateDirectory (Path.GetDirectoryName path) |> ignore
+            | :? IMetadataProjectReference as r -> Some (ProjectMetadataReference ((makePath r.Name), r.EmitReferenceAssembly))
 
-                    // Write metadata to disk
-                    use fs = File.OpenWrite path
-                    r.EmitReferenceAssembly fs
-                    path
+            // Other
+            | _ -> failwith "Invalid reference type")
+        |>| (List.map (fun r -> r.VirtPath, r) >> Map.ofList)
 
-                Some path, Some path
+    let makeStream = function
+        | FileMetadataReference f -> File.OpenRead f :> Stream
+        | ImageMetadataReference (p, a) -> new MemoryStream (a) :> Stream
+        | ProjectMetadataReference (p, a) -> let ms = new MemoryStream () in a ms; ms :> Stream
 
-            | _ -> None, None
+    let makeByteArray = function
+        | FileMetadataReference f -> File.ReadAllBytes f
+        | ImageMetadataReference (p, a) -> a
+        | ProjectMetadataReference (p, a) -> use ms = new MemoryStream () in a ms; ms.ToArray ()
 
+    let makeFs refs =
+        let defaultFileSystem = Shim.FileSystem
+        { new IFileSystem with
+            // Implement the service to open files for reading and writing
+            member fs.FileStreamReadShim name =
+                tprintfn "FileStreamReadShim: %s" name
+                match Map.tryFind name refs with
+                | Some s -> makeStream s
+                | _ -> defaultFileSystem.FileStreamReadShim name
 
-        let outExt ext = Path.Combine [|outputPath; project.Name + ext|]
+            member fs.FileStreamCreateShim name =
+                tprintfn "FileStreamCreateShim: %s" name
+                defaultFileSystem.FileStreamCreateShim name
+
+            member fs.FileStreamWriteExistingShim name =
+                tprintfn "FileStreamWriteExistingShim: %s" name
+                defaultFileSystem.FileStreamWriteExistingShim name
+
+            member fs.ReadAllBytesShim name =
+                tprintfn "ReadAllBytesShim: %s" name
+                match Map.tryFind name refs with
+                | Some s -> makeByteArray s
+                | _ -> defaultFileSystem.ReadAllBytesShim name
+
+            // Implement the service related to temporary paths and file time stamps
+            member fs.GetTempPathShim () = 
+                tprintfn "GetTempPathShim: ()"
+                defaultFileSystem.GetTempPathShim ()
+
+            member fs.GetLastWriteTimeShim name = 
+                tprintfn "GetLastWriteTimeShim: %s" name
+                defaultFileSystem.GetLastWriteTimeShim name
+
+            member fs.GetFullPathShim name = 
+                tprintfn "GetFullPathShim: %s" name
+                defaultFileSystem.GetFullPathShim name
+
+            member fs.IsInvalidPathShim name = 
+                tprintfn "IsInvalidPathShim: %s" name
+                defaultFileSystem.IsInvalidPathShim name
+
+            member fs.IsPathRootedShim name = 
+                tprintfn "IsPathRootedShim: %s" name
+                defaultFileSystem.IsPathRootedShim name
+
+            // Implement the service related to file existence and deletion
+            member fs.SafeExists name =
+                tprintfn "SafeExists: %s" name
+                Map.containsKey name refs || defaultFileSystem.SafeExists name
+
+            member fs.FileDelete name =
+                tprintfn "FileDelete: %s" name
+                defaultFileSystem.FileDelete name
+
+            // Implement the service related to assembly loading, used to load type providers
+            // and for F# interactive.
+            member fs.AssemblyLoadFrom name =
+                tprintfn "AssemblyLoadFrom: %s" name
+                defaultFileSystem.AssemblyLoadFrom name
+
+            member fs.AssemblyLoad name =
+                tprintfn "AssemblyLoad: %s" name.FullName
+                defaultFileSystem.AssemblyLoad name
+        }
+
+    let param name value = sprintf "--%s:%s" name value
+
+    let emit name sources refs outputPath emitPdb emitDocFile emitExe inMemory =
+        let outExt ext = Path.Combine [|outputPath; name + ext|]
         let outputDll = outExt (if emitExe then ".exe" else ".dll")
 
         let compilerArgs = [(param "out" outputDll); "--target:" + (if emitExe then "exe" else "library"); "--noframework"]
-        
-        if not inMemory then
-            Directory.CreateDirectory tempBasePath |> ignore
 
         let compilerArgs = 
             match emitPdb with
@@ -76,9 +162,7 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
                 (param "doc" doc) :: compilerArgs
 
         // F# cares about order so assume that the files were listed in order
-        let compilerArgs = (project.SourceFiles |> List.ofSeq |> List.rev) @ compilerArgs
-        project.SourceFiles
-        |> Seq.iter (fun f -> watcher.WatchFile f |> ignore)
+        let compilerArgs = (sources |> List.ofSeq |> List.rev) @ compilerArgs
 
         // These are the metadata references being used by your project.
         // Everything in your project.json is resolved and normailzed here:
@@ -86,28 +170,17 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
         // - Package references are turned into the appropriate assemblies
         // - Assembly neutral references
         // Each IMetadaReference maps to an assembly
-        let compilerArgs, tempFiles =
-            let refs, tempFiles =
-                incomingReferences
-                |> List.ofSeq
-                |> List.map convertRef
-                |> List.unzip
+        let compilerArgs =
+            let refs = refs |> List.map MetadataReference.virtPath
+            let refs = refs |> List.map (fun r -> "-r:" + r)
 
-            let refs = refs |> List.choose id
-            let tempFiles = tempFiles |> List.choose id
+            refs @ compilerArgs
 
-            let refs =
-                refs
-                |> List.map (fun r -> "-r:" + r)
-
-            refs @ compilerArgs, tempFiles
-        
         let compilerArgsArr = ("fsc.exe" :: (compilerArgs |> List.rev)) |> Array.ofList
 
         let scs = SimpleSourceCodeServices()
         let errors, exitCode = scs.Compile compilerArgsArr
-        tempFiles |> Seq.iter (fun f -> File.Delete f |> ignore)
-        Directory.Delete tempBasePath
+
         let warnings =
             errors
             |> Array.choose (fun e ->
@@ -127,61 +200,68 @@ type internal FSharpProjectReference(project: Project, targetFramework: Framewor
         let success = match exitCode with | 0 -> true | _ -> false
         new DiagnosticResult (success, warnings, errors) :> IDiagnosticResult
 
-    interface IMetadataReference with
-        member x.Name with get () = project.Name
-    
-    interface IMetadataProjectReference with
-        member x.ProjectPath with get () = project.ProjectFilePath
-    
-        member x.GetDiagnostics () =
-            let outputDir = Path.Combine [|Path.GetTempPath (); "diagnostics-" + (System.Guid.NewGuid ()).ToString ()|]
+    let getProjectReference (project: Project) targetFramework configuration incomingReferences (watcher: IFileWatcher) =
+        let refs, refsMap = getReferences project targetFramework incomingReferences
+        let fs = makeFs refsMap
 
-            try
-                emit outputDir false false false true
-            finally
-                Directory.Delete (outputDir, true)
+        let run name fn =
+            //System.Diagnostics.Debugger.Launch () |> ignore
+            lock (fun () ->
+                tprintfn "%s" name
+                let defaultFileSystem = Shim.FileSystem
+                Shim.FileSystem <- fs
+                let result = fn ()
+                Shim.FileSystem <- defaultFileSystem
+                result)
 
-        member x.Load (loaderEngine) =
-            let outputDir = Path.Combine [|Path.GetTempPath (); "dynamic-assemblies"|]
+        let getTempPath () =
+            Path.Combine(Path.GetTempPath (), project.Name, (System.Guid.NewGuid ()).ToString ())
 
-            let result = emit outputDir true false false true
+        let withTemp fn = fun () ->
+            let path = getTempPath ()
+            Directory.CreateDirectory path
+            let result = fn path
+            Directory.Delete (path, true)
+            result
 
-            match result.Success with
-            | false -> raise (new CompilationException (result.Errors |> System.Linq.Enumerable.ToList))
-            | true ->
-                let assemblyPath = Path.Combine [|outputDir; project.Name + ".dll"|]
+        { new IMetadataProjectReference with
+            member x.Name with get () = project.Name
+            member x.ProjectPath with get () = project.ProjectDirectory
 
-                loaderEngine.LoadFile assemblyPath
+            member x.GetDiagnostics () = 
+                run "GetDiagnostics" (withTemp (fun path ->
+                    emit project.Name project.SourceFiles refs path true true false true))
 
-        member x.EmitReferenceAssembly (stream) =
-            let outputDir = Path.Combine [|Path.GetTempPath (); "reference-assembly-" + (System.Guid.NewGuid ()).ToString ()|]
+            member x.Load loaderEngine = 
+                run "GetDiagnostics" (withTemp (fun path ->
+                    emit project.Name project.SourceFiles refs path true false false true |> ignore
+                    let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
+                    loaderEngine.LoadFile assemblyPath))
 
-            try
-                let result = emit outputDir false false false false
+            member x.EmitReferenceAssembly stream = 
+                run "EmitReferenceAssembly" (withTemp (fun path ->
+                    emit project.Name project.SourceFiles refs path false false false false |> ignore
+                    let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
+                    use fs = File.OpenRead assemblyPath
+                    fs.CopyTo stream))
 
-                match result.Success with
-                | false -> ()
-                | true ->
-                    use fs = File.OpenRead (Path.Combine [|outputDir; project.Name + ".dll"|])
-                    fs.CopyTo stream
-                    ()
-            
-            finally
-                Directory.Delete (outputDir, true)
+            member x.EmitAssembly path =
+                run "EmitAssembly" (fun () ->
+                    project.SourceFiles
+                    |> Seq.iter (fun f -> watcher.WatchFile f |> ignore)
+                    emit project.Name project.SourceFiles refs path true true false false)
 
-        member x.EmitAssembly (path) =
-            emit path true true false false
-
-        member x.GetSources () =
-            project.SourceFiles
-            |> List.ofSeq
-            |> List.map (fun p -> new SourceFileReference (p) :> ISourceReference)
-            |> Array.ofList
-            :> IList<ISourceReference>
+            member x.GetSources () =
+                project.SourceFiles
+                |> List.ofSeq
+                |> List.map (fun p -> new SourceFileReference (p) :> ISourceReference)
+                |> Array.ofList
+                :> System.Collections.Generic.IList<ISourceReference>
+        }
 
 type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
-
+    
     interface IProjectReferenceProvider with
 
         member x.GetProjectReference (project, targetFramework, configuration, incomingReferences, incomingSourceReferences, outgoingReferences) =
-            new FSharpProjectReference (project, targetFramework, configuration, incomingReferences, watcher) :> IMetadataProjectReference
+            Compiler.getProjectReference project targetFramework configuration incomingReferences watcher
