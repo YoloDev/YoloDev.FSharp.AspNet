@@ -219,9 +219,8 @@ module internal Compiler =
                 result)
 
         let getTempPath () =
-            let path = Path.GetTempPath()
-            let temp = path ()
-            Path.Combine(temp, project.Name, (System.Guid.NewGuid ()).ToString ())
+            let path = Path.GetTempPath() // typecheck warning, compiler thinks it might be mutated
+            Path.Combine(path, project.Name, (System.Guid.NewGuid ()).ToString ())
 
         let withTemp fn = fun () ->
             let path = getTempPath ()
