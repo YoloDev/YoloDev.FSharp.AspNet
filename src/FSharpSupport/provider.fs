@@ -11,7 +11,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 module Helpers =
     let inline ni () = raise (new System.NotImplementedException ())
 
-[<NoEquality>]
+[<NoEquality; NoComparison>]
 type internal MetadataReference =
 | FileMetadataReference of string
 | ImageMetadataReference of string * byte array
@@ -34,8 +34,8 @@ module internal Compiler =
         let l = new obj ()
         lock l fn
 
-    let tprintf fmt = ignore fmt // Printf.ksprintf System.Diagnostics.Trace.Write fmt
-    let tprintfn fmt = ignore fmt //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
+    let tprintf fmt = ignore // Printf.ksprintf System.Diagnostics.Trace.Write fmt
+    let tprintfn fmt = ignore //Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
 
     let getReferences (project: Project) targetFramework incomingReferences =
         let name = project.Name
