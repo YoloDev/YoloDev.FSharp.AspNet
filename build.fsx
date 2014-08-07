@@ -89,6 +89,7 @@ Target "Clean" (fun _ ->
 
 Target "Prepare" (fun _ ->
     Copy (pass 1) (!!"packages/FSharpSupport/lib/net45/FSharpSupport.*")
+    Directory.CreateDirectory (proj @@ "bin" @@ "debug" @@ "net45") |> ignore
     let path = sprintf "%s;%s;%s" !krePath (!krePath @@ "lib" @@ "Microsoft.Framework.PackageManager") (pass 1)
     klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "restore"]
 )
