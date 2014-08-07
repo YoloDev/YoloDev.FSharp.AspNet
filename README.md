@@ -1,5 +1,8 @@
-FSharpSupport ![build status](http://img.shields.io/appveyor/ci/Alxandr/fsharpsupport-117.svg?style=flat)
+FSharpSupport
 =============
+![build status](http://img.shields.io/appveyor/ci/Alxandr/fsharpsupport-117.svg?style=flat)
+![repo size](https://reposs.herokuapp.com/?path=YoloDev/FSharpSupport&style=flat)
+
 FSharp Support for K
 
 Usage
