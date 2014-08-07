@@ -128,8 +128,8 @@ let symbolSource = environVar "SYMBOL_SOURCE"
 let symbolApiKey = environVar "SYMBOL_API_KEY"
 
 Target "Publish" (fun _ ->
-    nugetPush (proj @@ "bin" @@ "debug" @@ "net45" @@ (sprintf "FSharpSupport.0.1-alpha-%s.nupkg" kBuildVersion)) nugetSource nugetApiKey
-    nugetPush (proj @@ "bin" @@ "debug" @@ "net45" @@ (sprintf "FSharpSupport.0.1-alpha-%s.symbols.nupkg" kBuildVersion)) symbolSource symbolApiKey
+    nugetPush (proj @@ "bin" @@ "debug" @@ (sprintf "FSharpSupport.0.1-alpha-%s.nupkg" kBuildVersion)) nugetSource nugetApiKey
+    nugetPush (proj @@ "bin" @@ "debug" @@ (sprintf "FSharpSupport.0.1-alpha-%s.symbols.nupkg" kBuildVersion)) symbolSource symbolApiKey
 )
 
 let shouldPublish =
