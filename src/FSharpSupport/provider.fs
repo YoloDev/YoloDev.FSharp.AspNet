@@ -146,6 +146,7 @@ module internal Compiler =
     let param name value = sprintf "--%s:%s" name value
 
     let emit name sources refs outputPath emitPdb emitDocFile emitExe _ =
+        Directory.CreateDirectory outputPath |> ignore
         let outExt ext = Path.Combine [|outputPath; name + ext|]
         let outputDll = outExt (if emitExe then ".exe" else ".dll")
 
