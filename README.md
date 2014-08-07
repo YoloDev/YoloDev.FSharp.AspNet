@@ -1,11 +1,9 @@
-FSharpSupport
+FSharpSupport ![build status](http://img.shields.io/appveyor/ci/Alxandr/fsharpsupport-117.svg?style=flat)
 =============
-
 FSharp Support for K
 
 Usage
 ===
-
 #### Step 1.
 Add the yolodev myget feed to your `NuGet.Config` file. Sample:
 
