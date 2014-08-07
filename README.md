@@ -46,12 +46,10 @@ Sample:
 ```
 
 #### Step 3.
-Code whatever you want in F#! Have fun!
+Code in F#!
 
 #### Step 4.
-Down to bussiness again. As there is no tooling support for F# together with vNext yet there is some manual labor required. Open up a `Developer Command Prompt`, this is a command prompt with a few required paths of tools pre-loaded. A link to this tool resides in the `Visual Studio Tools` folder in your start screen. The shortcut is also found in `C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\Shortcuts`.
-
-Navigate to your project folder in the command prompt, to the folder where the `project.json` is. Enter `k run` or `k web`. Now watch the magic or go fix your bugs!
+???
 
 #### Step 5.
-Profit! Yes, it's that simple.
+Profit!
