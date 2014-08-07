@@ -6,7 +6,8 @@ FSharp Support for K
 Usage
 ===
 
-1. Add the yolodev myget feed to your `NuGet.Config` file. Sample:
+#### Step 1.
+Add the yolodev myget feed to your `NuGet.Config` file. Sample:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -19,7 +20,8 @@ Usage
 </configuration>
 ```
 
-2. Create a new project, add the current project as a dependency, and add a "language" key to the project.json. You also need to add sources, since the default one just goes looking for *.cs. This is also quite important in F#, since file order matters. Sample:
+#### Step 2.
+Create a new project, add the current project as a dependency, and add a "language" key to the project.json. You also need to add sources, since the default one just goes looking for *.cs. This is also quite important in F#, since file order matters. Sample:
 
 ```js
 {
@@ -38,6 +40,11 @@ Usage
 }
 ```
 
-3. Code in F#
-4. ????
-5. Profit
+#### Step 3.
+Code in F#.
+
+#### Step 4.
+????
+
+#### Step 5.
+Profit.
