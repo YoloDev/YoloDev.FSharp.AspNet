@@ -134,7 +134,7 @@ Target "Publish" (fun _ ->
 
 let shouldPublish =
     let anyEmpty = 
-        [kBuildVersion; avRepoBranch; avPrn; nugetSource; nugetApiKey; symbolSource; symbolApiKey]
+        [kBuildVersion; avRepoBranch; nugetSource; nugetApiKey; symbolSource; symbolApiKey]
         |> List.exists String.IsNullOrWhiteSpace
     
     match anyEmpty with
