@@ -269,5 +269,8 @@ type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
     
     interface IProjectReferenceProvider with
 
-        member x.GetProjectReference (project, targetFramework, configuration, incomingReferences, _, _) =
+        member x.GetProjectReference (project, targetFramework, configuration, referenceResolver, _) =
+            let export = referenceResolver.Invoke ()
+            let incomingReferences = export.MetadataReferences
+
             Compiler.getProjectReference project targetFramework configuration incomingReferences watcher
