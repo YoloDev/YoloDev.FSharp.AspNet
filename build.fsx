@@ -31,12 +31,17 @@ let exec dir cmd args =
 let kvm = exec (Directory.GetCurrentDirectory ()) (Directory.GetCurrentDirectory () @@ "packages" @@ "KoreBuild" @@ "build" @@ "kvm")
 let klr dir args =
     exec dir (!krePath @@ "klr") args
+let kpm dir args =
+    exec dir (!krePath @@ "kpm") args
+let git dir args =
+    exec dir "git" args
 
 let nugetPush pkg source key =
     exec (Directory.GetCurrentDirectory ()) (Directory.GetCurrentDirectory () @@ ".nuget" @@ "nuget.exe") ["push"; pkg; key; "-Source"; source]
 
 let obj = Path.GetFullPath "./obj/"
 let proj = Path.GetFullPath "./src/FSharpSupport"
+let lib = Path.GetFullPath "./lib"
 let pass n = obj @@ (sprintf "pass%d" n)
 
 Target "Install KRE" (fun _ ->
@@ -107,7 +112,21 @@ Target "Pass 1" (fun _ ->
         copy 2
     with
         | _ ->
-            failwith "TODO: Bootstrap"
+            trace "Fowler broke my shit, bootstrapping"
+            CleanDir lib
+            CreateDir lib
+            let fowler = lib @@ "Fowler"
+            let fsharp = fowler @@ "src" @@ "FSharpSupport"
+            git lib ["clone"; "https://github.com/davidfowl/vNextLanguageSupport.git"; fowler]
+            kpm fsharp ["restore"]
+            kpm fsharp ["build"]
+            Copy (pass 0) !!(fsharp @@ "bin" @@ "Debug" @@ "net45" @@ "*")
+
+            build 0
+            copy 1
+
+            build 1
+            copy 2
 )
 
 Target "Pass 2" (fun _ ->
