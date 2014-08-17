@@ -1,0 +1,23 @@
+﻿{
+  "version": "0.1-alpha-*",
+  "authors": [ "Alxandr" ],
+  "dependencies": {
+    "FSharpSupport": "",
+    "Xunit.KRunner": "1.0.0-*"
+  },
+  "code": [ "test.fs" ],
+  "language": {
+    "name": "F#",
+    "assembly": "FSharpSupport",
+    "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
+  },
+  "configurations": {
+    "net451": {
+      "dependencies": { }
+    }
+  },
+  "commands": {
+    "run": "Xunit.KRunner",
+    "test": "Xunit.KRunner"
+  }
+}
