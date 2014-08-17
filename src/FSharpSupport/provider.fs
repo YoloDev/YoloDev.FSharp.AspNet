@@ -239,10 +239,11 @@ module internal Compiler =
                     emit project.Name project.SourceFiles refs path true true false true))
 
             member x.Load loaderEngine = 
-                run "GetDiagnostics" (withTemp (fun path ->
+                run "Load" (fun () ->
+                    let path = getTempPath ()
                     emit project.Name project.SourceFiles refs path true false false true |> ignore
                     let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                    loaderEngine.LoadFile assemblyPath))
+                    loaderEngine.LoadFile assemblyPath)
 
             member x.EmitReferenceAssembly stream = 
                 run "EmitReferenceAssembly" (withTemp (fun path ->

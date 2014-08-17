@@ -30,7 +30,7 @@ let exec dir cmd args =
 
 let kvm = exec (Directory.GetCurrentDirectory ()) (Directory.GetCurrentDirectory () @@ "packages" @@ "KoreBuild" @@ "build" @@ "kvm")
 let klr dir args =
-    exec dir (!krePath @@ "klr") args
+    exec dir (!krePath @@ "klr") (["--appbase"; dir] @ args)
 let kpm dir args =
     exec dir (!krePath @@ "kpm") args
 let git dir args =
@@ -41,6 +41,7 @@ let nugetPush pkg source key =
 
 let obj = Path.GetFullPath "./obj/"
 let proj = Path.GetFullPath "./src/FSharpSupport"
+let testProj = Path.GetFullPath "./test/FSharpSupport.Test"
 let lib = Path.GetFullPath "./lib"
 let pass n = obj @@ (sprintf "pass%d" n)
 
@@ -138,6 +139,12 @@ Target "Pass 3" (fun _ ->
     build 3
 )
 
+Target "Test" (fun _ ->
+    let path = sprintf "%s;%s;%s" !krePath (!krePath @@ "lib" @@ "Microsoft.Framework.PackageManager") (pass 3)
+    klr testProj ["--lib"; path; "Microsoft.Framework.PackageManager"; "restore"]
+    klr testProj ["--lib"; path; "Microsoft.Framework.ApplicationHost"; "test"]
+)
+
 let kBuildVersion = environVar "K_BUILD_VERSION"
 let avRepoBranch = environVar "APPVEYOR_REPO_BRANCH"
 let avPrn = environVar "APPVEYOR_PULL_REQUEST_NUMBER"
@@ -172,6 +179,7 @@ Target "Default" id
     ==> "Pass 1"
     ==> "Pass 2"
     ==> "Pass 3"
+    ==> "Test"
     =?> ("Publish", shouldPublish)
     ==> "Default"
 
