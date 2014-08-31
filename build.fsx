@@ -1,6 +1,7 @@
 // include Fake lib
 #r @"packages/FAKE/tools/FakeLib.dll"
 open Fake
+open Fake.FscHelper
 open System
 open System.IO
 
@@ -36,13 +37,17 @@ let kpm dir args =
 let git dir args =
     exec dir "git" args
 
+let nuget dir args =
+    exec dir (Directory.GetCurrentDirectory () @@ ".nuget" @@ "nuget.exe") args
 let nugetPush pkg source key =
-    exec (Directory.GetCurrentDirectory ()) (Directory.GetCurrentDirectory () @@ ".nuget" @@ "nuget.exe") ["push"; pkg; key; "-Source"; source]
+    nuget (Directory.GetCurrentDirectory ()) ["push"; pkg; key; "-Source"; source]
 
+let root = Path.GetFullPath "."
 let obj = Path.GetFullPath "./obj/"
 let proj = Path.GetFullPath "./src/FSharpSupport"
 let testProj = Path.GetFullPath "./test/FSharpSupport.Test"
 let lib = Path.GetFullPath "./lib"
+let packages = Path.GetFullPath "./packages"
 let pass n = obj @@ (sprintf "pass%d" n)
 
 Target "Install KRE" (fun _ ->
@@ -114,20 +119,30 @@ Target "Pass 1" (fun _ ->
     with
         | _ ->
             trace "Fowler broke my shit, bootstrapping"
-            CleanDir lib
-            CreateDir lib
-            let fowler = lib @@ "Fowler"
-            let fsharp = fowler @@ "src" @@ "FSharpSupport"
-            git lib ["clone"; "https://github.com/davidfowl/vNextLanguageSupport.git"; fowler]
-            kpm fsharp ["restore"]
-            kpm fsharp ["build"]
-            Copy (pass 0) !!(fsharp @@ "bin" @@ "Debug" @@ "net45" @@ "*")
+            nuget root ["install"; "YoloDev.UnpaK"; "-ExcludeVersion"; "-o"; "packages"; "-nocache"; "-pre"]
+            let unpakPath = packages @@ "YoloDev.UnpaK" @@ "lib" @@ "net451"
+            let bootstrap = obj @@ "bootstrap"
+            let bin = bootstrap @@ "bin"
+            CreateDir bootstrap
+            klr proj ["--lib"; sprintf "%s;%s" !krePath unpakPath; "YoloDev.UnpaK"; "-o"; bootstrap]
+            CreateDir bin
+            let sources = File.ReadAllLines (bootstrap @@ "sources.txt") |> List.ofArray
+            let refs = File.ReadAllLines (bootstrap @@ "references.txt") |> List.ofArray
+            let out = bin @@ "FSharpSupport.dll"
+            let args = ["--out:" + out; "--target:library"; "--debug"; "--noframework"] @ (refs |> List.map (sprintf "--reference:%s"))
 
-            build 0
-            copy 1
 
-            build 1
-            copy 2
+            match sources |> fscList args with
+            | 0 ->
+                Copy (pass 0) !!(bin @@ "*")
+
+                build 0
+                copy 1
+
+                build 1
+                copy 2
+
+            | _ as n -> failwithf "fsc.exe returned status code %d" n
 )
 
 Target "Pass 2" (fun _ ->

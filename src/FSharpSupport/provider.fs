@@ -37,7 +37,7 @@ module internal Compiler =
     //let tprintf fmt = Printf.ksprintf System.Diagnostics.Trace.Write fmt
     let tprintf _ = ignore
 
-    //let tprintfn fmt = Printf.ksprintf System.Diagnostics.Trace.WriteLine fmt
+    //let tprintfn fmt = Printf.ksprintf System.Console.Out.WriteLine fmt
     let tprintfn _ = ignore
 
     let getReferences _ _ incomingReferences =
@@ -104,7 +104,7 @@ module internal Compiler =
 
             // Implement the service related to temporary paths and file time stamps
             member fs.GetTempPathShim () = 
-                tprintfn "GetTempPathShim: ()" ()
+                tprintfn "GetTempPathShim: ()%s" ""
                 defaultFileSystem.GetTempPathShim ()
 
             member fs.GetLastWriteTimeShim name = 
@@ -270,8 +270,8 @@ type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
     
     interface IProjectReferenceProvider with
 
-        member x.GetProjectReference (project, targetFramework, configuration, referenceResolver, _) =
+        member x.GetProjectReference (project, target, referenceResolver, _) =
             let export = referenceResolver.Invoke ()
             let incomingReferences = export.MetadataReferences
 
-            Compiler.getProjectReference project targetFramework configuration incomingReferences watcher
+            Compiler.getProjectReference project target.TargetFramework target.Configuration incomingReferences watcher

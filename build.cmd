@@ -25,4 +25,4 @@ REM CALL packages\KoreBuild\build\kvm install default -svrc50 -x86
 
 :run
 REM Run FAKE
-packages\FAKE\tools\Fake.exe build.fsx
+packages\FAKE\tools\Fake.exe build.fsx %*
