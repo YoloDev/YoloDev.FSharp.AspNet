@@ -51,7 +51,7 @@ let packages = Path.GetFullPath "./packages"
 let pass n = obj @@ (sprintf "pass%d" n)
 
 Target "Install KRE" (fun _ ->
-    kvm ["upgrade"; "-svr50"; "-x86"]
+    kvm ["upgrade"; "-runtime"; "CLR"; "-x86"]
     let kreHome =
         let home = environVar "KRE_HOME"
         let home = 
