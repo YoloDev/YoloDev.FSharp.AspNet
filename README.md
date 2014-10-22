@@ -42,7 +42,7 @@ Sample:
         "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
     },
     "frameworks": {
-        "net45": { }
+        "aspnet50": { }
     }
 }
 ```
