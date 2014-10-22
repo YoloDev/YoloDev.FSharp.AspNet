@@ -48,10 +48,14 @@ Sample:
 ```
 
 #### Step 3.
-Code in F#!
+Change the following value in the properties dialog for the project:
+![properties](http://i.imgur.com/F0Xgxhy.png)
 
 #### Step 4.
-???
+Code in F#!
 
 #### Step 5.
+???
+
+#### Step 6.
 Profit!
