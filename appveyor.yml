@@ -16,5 +16,9 @@ environment:
   XUNIT_TEST_VISITOR: Xunit.KRunner.AppVeyor
   #BUILD_NUMBER: "$(build)"
 
-#artifacts:
-#  - path: artifacts\build\*.nupkg
+nuget:
+  account_feed: true
+  project_feed: true
+
+artifacts:
+  - path: artifacts\build\*.nupkg
