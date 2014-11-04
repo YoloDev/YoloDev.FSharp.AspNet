@@ -1,12 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.21901.1
+VisualStudioVersion = 14.0.22013.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "FSharpSupport", "src\FSharpSupport\FSharpSupport.kproj", "{C47A5776-DEE0-4D3E-B605-BA1D0D33D90E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{810EF3A4-F5B6-4CA9-85E8-E748325C338C}"
 	ProjectSection(SolutionItems) = preProject
+		build.cmd = build.cmd
 		build.fsx = build.fsx
 		global.json = global.json
 	EndProjectSection

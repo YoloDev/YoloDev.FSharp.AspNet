@@ -12,7 +12,7 @@
     "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
   },
   "configurations": {
-    "net451": {
+    "aspnet50": {
       "dependencies": { }
     }
   },

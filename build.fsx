@@ -48,6 +48,7 @@ let proj = Path.GetFullPath "./src/FSharpSupport"
 let testProj = Path.GetFullPath "./test/FSharpSupport.Test"
 let lib = Path.GetFullPath "./lib"
 let packages = Path.GetFullPath "./packages"
+let artifacts = Path.GetFullPath "./artifacts/build"
 let pass n = obj @@ (sprintf "pass%d" n)
 
 Target "Install KRE" (fun _ ->
@@ -99,8 +100,8 @@ Target "Clean" (fun _ ->
 )
 
 Target "Prepare" (fun _ ->
-    Copy (pass 1) (!!"packages/FSharpSupport/lib/net45/FSharpSupport.*")
-    //Directory.CreateDirectory (proj @@ "bin" @@ "debug" @@ "net45") |> ignore
+    Copy (pass 1) (!!"packages/FSharpSupport/lib/aspnet50/FSharpSupport.*")
+    //Directory.CreateDirectory (proj @@ "bin" @@ "debug" @@ "aspnet50") |> ignore
     let path = sprintf "%s;%s;%s" !krePath (!krePath @@ "lib" @@ "Microsoft.Framework.PackageManager") (pass 1)
     klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "restore"]
 )
@@ -110,7 +111,7 @@ let build n =
     klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "build"]
 
 let copy n =
-    Copy (pass n) !!(proj @@ "bin" @@ "debug" @@ "net45" @@ "FSharpSupport.*")
+    Copy (pass n) !!(proj @@ "bin" @@ "debug" @@ "aspnet50" @@ "FSharpSupport.*")
 
 Target "Pass 1" (fun _ ->
     try
@@ -120,7 +121,7 @@ Target "Pass 1" (fun _ ->
         | _ ->
             trace "Fowler broke my shit, bootstrapping"
             nuget root ["install"; "YoloDev.UnpaK"; "-ExcludeVersion"; "-o"; "packages"; "-nocache"; "-pre"]
-            let unpakPath = packages @@ "YoloDev.UnpaK" @@ "lib" @@ "net451"
+            let unpakPath = packages @@ "YoloDev.UnpaK" @@ "lib" @@ "aspnet50"
             let bootstrap = obj @@ "bootstrap"
             let bin = bootstrap @@ "bin"
             CreateDir bootstrap
@@ -160,31 +161,9 @@ Target "Test" (fun _ ->
     klr testProj ["--lib"; path; "Microsoft.Framework.ApplicationHost"; "test"]
 )
 
-let kBuildVersion = environVar "K_BUILD_VERSION"
-let avRepoBranch = environVar "APPVEYOR_REPO_BRANCH"
-let avPrn = environVar "APPVEYOR_PULL_REQUEST_NUMBER"
-let nugetSource = environVar "NUGET_SOURCE"
-let nugetApiKey = environVar "NUGET_API_KEY"
-let symbolSource = environVar "SYMBOL_SOURCE"
-let symbolApiKey = environVar "SYMBOL_API_KEY"
-
-Target "Publish" (fun _ ->
-    nugetPush (proj @@ "bin" @@ "debug" @@ (sprintf "FSharpSupport.0.1-alpha-%s.nupkg" kBuildVersion)) nugetSource nugetApiKey
-    nugetPush (proj @@ "bin" @@ "debug" @@ (sprintf "FSharpSupport.0.1-alpha-%s.symbols.nupkg" kBuildVersion)) symbolSource symbolApiKey
+Target "CopyToArtifacts" (fun _ ->
+    Copy artifacts !!(proj @@ "bin" @@ "debug" @@ "*.nupkg")
 )
-
-let shouldPublish =
-    let anyEmpty = 
-        [kBuildVersion; avRepoBranch; nugetSource; nugetApiKey; symbolSource; symbolApiKey]
-        |> List.exists String.IsNullOrWhiteSpace
-    
-    match anyEmpty with
-    | true -> false
-    | false ->
-        let avPrn = if avPrn = null then String.Empty else avPrn
-        match avRepoBranch, avPrn with
-        | "master", "" -> true
-        | _ -> false
 
 Target "Default" id
 
@@ -195,7 +174,7 @@ Target "Default" id
     ==> "Pass 2"
     ==> "Pass 3"
     ==> "Test"
-    =?> ("Publish", shouldPublish)
+    ==> "CopyToArtifacts"
     ==> "Default"
 
 // start build

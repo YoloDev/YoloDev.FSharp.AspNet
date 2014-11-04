@@ -15,7 +15,7 @@ md .nuget
 copy %CACHED_NUGET% .nuget\nuget.exe > nul
 
 :restore
-.nuget\NuGet.exe install FSharpSupport -ExcludeVersion -o packages -nocache -pre
+REM .nuget\NuGet.exe install FSharpSupport -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install FAKE -ExcludeVersion -o packages
 
