@@ -23,7 +23,7 @@ let exec dir cmd args =
                 let strArgs = sprintf "/C %s %s" psi.FileName psi.Arguments
                 psi.Arguments <- strArgs
                 psi.FileName <- "cmd"
-            ()) TimeSpan.MaxValue
+            ()) (TimeSpan.FromMinutes 10.0)
 
     match result with
     | 0 -> ()
