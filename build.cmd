@@ -13,6 +13,7 @@ IF NOT EXIST %LocalAppData%\NuGet md %LocalAppData%\NuGet
 IF EXIST .nuget\nuget.exe goto restore
 md .nuget
 copy %CACHED_NUGET% .nuget\nuget.exe > nul
+.nuget\NuGet.exe update -self
 
 :restore
 .nuget\NuGet.exe install FSharpSupport -ExcludeVersion -o packages -nocache -pre
