@@ -22,3 +22,9 @@ nuget:
 
 artifacts:
   - path: artifacts\build\*.nupkg
+
+deploy:
+  - provider: Environment
+    name: yolodev
+    on:
+      branch: master
