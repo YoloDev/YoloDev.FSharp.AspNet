@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22013.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "FSharpSupport", "src\FSharpSupport\FSharpSupport.kproj", "{C47A5776-DEE0-4D3E-B605-BA1D0D33D90E}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "YoloDev.FSharp.AspNet", "src\YoloDev.FSharp.AspNet\YoloDev.FSharp.AspNet.kproj", "{C47A5776-DEE0-4D3E-B605-BA1D0D33D90E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{810EF3A4-F5B6-4CA9-85E8-E748325C338C}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{652E8930-929
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0DE54B96-5EED-453E-A5AB-4386401FA36D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "FSharpSupport.Test", "test\FSharpSupport.Test\FSharpSupport.Test.kproj", "{B8F825ED-C20A-4C66-8519-90DC2E255F7E}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "YoloDev.FSharp.AspNet.Test", "test\YoloDev.FSharp.AspNet.Test\YoloDev.FSharp.AspNet.Test.kproj", "{B8F825ED-C20A-4C66-8519-90DC2E255F7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

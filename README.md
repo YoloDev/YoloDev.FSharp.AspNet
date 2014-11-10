@@ -1,4 +1,4 @@
-FSharpSupport
+YoloDev.FSharp.AspNet
 =============
 ![build status](http://img.shields.io/appveyor/ci/Alxandr/fsharpsupport-117.svg?style=flat)
 ![latest version](http://img.shields.io/myget/yolodev/v/FSharpSupport.svg?style=flat)
@@ -26,20 +26,20 @@ Sample:
 ```
 
 #### Step 2.
-Create a new `ASP.NET vNext Empty Web Application` or `ASP.NET vNext Desktop Application` project in Visual Studio 2014. The new project system uses a `project.json` file to list all the dependencies. This file resides in the root folder of the project. Add the FSharpSupport library as a dependency. Because we're going to use an other language than C# we have to add a "language" key to the project.json file. You also need to add sources, since the default one just goes looking for *.cs. This is also quite important in F#, since file order matters. So be sure you list the sources in the right order. 
+Create a new `ASP.NET vNext Empty Web Application` or `ASP.NET vNext Desktop Application` project in Visual Studio 2014. The new project system uses a `project.json` file to list all the dependencies. This file resides in the root folder of the project. Add the YoloDev.FSharp.AspNet library as a dependency. Because we're going to use an other language than C# we have to add a "language" key to the project.json file. You also need to add sources, since the default one just goes looking for *.cs. This is also quite important in F#, since file order matters. So be sure you list the sources in the right order. 
 
 Sample:
 
 ```js
 {
     "dependencies": {
-        "FSharpSupport": "0.1-*"
+        "YoloDev.FSharp.AspNet": "0.1-*"
     },
     "code": [ "file1.fs", "file2.fs" ],
     "language": {
         "name": "F#",
-        "assembly": "FSharpSupport",
-        "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
+        "assembly": "YoloDev.FSharp.AspNet",
+        "projectReferenceProviderType": "YoloDev.FSharp.AspNet.FSharpProjectReferenceProvider"
     },
     "frameworks": {
         "aspnet50": { }

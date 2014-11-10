@@ -1,4 +1,4 @@
-namespace FSharpSupport
+namespace YoloDev.FSharp.AspNet
 
 open System.IO
 open System.Runtime.Versioning
