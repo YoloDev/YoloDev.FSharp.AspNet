@@ -1,15 +1,15 @@
 ﻿{
-  "version": "0.1-alpha-*",
+  "version": "1.0.0-beta2-*",
   "authors": [ "Alxandr" ],
   "dependencies": {
-    "FSharpSupport": "",
+    "YoloDev.FSharp.AspNet": "",
     "Xunit.KRunner": "1.0.0-*"
   },
   "code": [ "test.fs" ],
   "language": {
     "name": "F#",
-    "assembly": "FSharpSupport",
-    "projectReferenceProviderType": "FSharpSupport.FSharpProjectReferenceProvider"
+    "assembly": "YoloDev.FSharp.AspNet",
+    "projectReferenceProviderType": "YoloDev.FSharp.AspNet.FSharpProjectReferenceProvider"
   },
   "configurations": {
     "aspnet50": {

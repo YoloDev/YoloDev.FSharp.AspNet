@@ -10,9 +10,9 @@
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>b8f825ed-c20a-4c66-8519-90dc2e255f7e</ProjectGuid>
+    <ProjectGuid>c47a5776-dee0-4d3e-b605-ba1d0d33d90e</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>FSharpSupport.Test</RootNamespace>
+    <RootNamespace>YoloDev.FSharp.AspNet</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition="$(OutputType) == 'Console'">
     <DebuggerFlavor>ConsoleDebugger</DebuggerFlavor>
@@ -27,7 +27,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="project.json" />
-    <Content Include="test.fs" />
+    <Content Include="provider.fs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>
