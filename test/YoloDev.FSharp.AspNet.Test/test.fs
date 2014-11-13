@@ -1,4 +1,4 @@
-﻿module ``YoloDev.FSharp.AspNet Test``
+﻿module ``YoloDev FSharp for AspNet Test``
 
 open Xunit
 
