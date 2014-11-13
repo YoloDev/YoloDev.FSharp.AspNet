@@ -5,7 +5,7 @@
   "dependencies": {
     "Microsoft.Framework.Runtime": "1.0.0-*",
     "FSharp.Compiler.Service": "0.0.58",
-    "FSharp.Core.Open.FS31": "3.1.1.5"
+    "FSharp.Core.Microsoft.Signed": "3.1.1.1"
   },
 
   "code": ["provider.fs"],
