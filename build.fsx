@@ -44,8 +44,8 @@ let nugetPush pkg source key =
 
 let root = Path.GetFullPath "."
 let obj = Path.GetFullPath "./obj/"
-let proj = Path.GetFullPath "./src/FSharpSupport"
-let testProj = Path.GetFullPath "./test/FSharpSupport.Test"
+let proj = Path.GetFullPath "./src/YoloDev.FSharp.AspNet"
+let testProj = Path.GetFullPath "./test/YoloDev.FSharp.AspNet.Test"
 let lib = Path.GetFullPath "./lib"
 let packages = Path.GetFullPath "./packages"
 let artifacts = Path.GetFullPath "./artifacts/build"
@@ -100,7 +100,7 @@ Target "Clean" (fun _ ->
 )
 
 Target "Prepare" (fun _ ->
-    Copy (pass 1) (!!"packages/FSharpSupport/lib/aspnet50/FSharpSupport.*")
+    Copy (pass 1) (!!"packages/YoloDev.FSharp.AspNet/lib/aspnet50/YoloDev.FSharp.AspNet.*")
     //Directory.CreateDirectory (proj @@ "bin" @@ "debug" @@ "aspnet50") |> ignore
     let path = sprintf "%s;%s;%s" !krePath (!krePath @@ "lib" @@ "Microsoft.Framework.PackageManager") (pass 1)
     klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "restore"]
@@ -111,7 +111,7 @@ let build n =
     klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "build"]
 
 let copy n =
-    Copy (pass n) !!(proj @@ "bin" @@ "debug" @@ "aspnet50" @@ "FSharpSupport.*")
+    Copy (pass n) !!(proj @@ "bin" @@ "debug" @@ "aspnet50" @@ "YoloDev.FSharp.AspNet.*")
 
 Target "Pass 1" (fun _ ->
     try
@@ -129,7 +129,7 @@ Target "Pass 1" (fun _ ->
             CreateDir bin
             let sources = File.ReadAllLines (bootstrap @@ "sources.txt") |> List.ofArray
             let refs = File.ReadAllLines (bootstrap @@ "references.txt") |> List.ofArray
-            let out = bin @@ "FSharpSupport.dll"
+            let out = bin @@ "YoloDev.FSharp.AspNet.dll"
             let args = ["--out:" + out; "--target:library"; "--debug"; "--noframework"] @ (refs |> List.map (sprintf "--reference:%s"))
 
 

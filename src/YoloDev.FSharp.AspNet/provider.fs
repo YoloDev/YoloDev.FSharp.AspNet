@@ -1,4 +1,4 @@
-namespace FSharpSupport
+namespace YoloDev.FSharp.AspNet
 
 open System.IO
 open System.Runtime.Versioning
@@ -241,16 +241,24 @@ module internal Compiler =
             member x.Load loaderEngine = 
                 run "Load" (fun () ->
                     let path = getTempPath ()
-                    emit project.Name project.SourceFiles refs path true false false true |> ignore
-                    let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                    loaderEngine.LoadFile assemblyPath)
+                    let result = emit project.Name project.SourceFiles refs path true false false true
+                    match result.Success with
+                    | true ->
+                        let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
+                        loaderEngine.LoadFile assemblyPath
+                    | false ->
+                        raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>)))
 
             member x.EmitReferenceAssembly stream = 
                 run "EmitReferenceAssembly" (withTemp (fun path ->
-                    emit project.Name project.SourceFiles refs path false false false false |> ignore
-                    let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                    use fs = File.OpenRead assemblyPath
-                    fs.CopyTo stream))
+                    let result = emit project.Name project.SourceFiles refs path false false false false
+                    match result.Success with
+                    | true ->
+                        let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
+                        use fs = File.OpenRead assemblyPath
+                        fs.CopyTo stream
+                    | false ->
+                        raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>))))
 
             member x.EmitAssembly path =
                 run "EmitAssembly" (fun () ->
