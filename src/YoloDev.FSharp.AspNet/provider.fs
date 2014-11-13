@@ -145,7 +145,7 @@ module internal Compiler =
 
     let param name value = sprintf "--%s:%s" name value
 
-    let emit name sources refs outputPath emitPdb emitDocFile emitExe _ =
+    let emit name sources refs outputPath emitPdb emitDocFile emitExe dynamic =
         Directory.CreateDirectory outputPath |> ignore
         let outExt ext = Path.Combine [|outputPath; name + ext|]
         let outputDll = outExt (if emitExe then ".exe" else ".dll")
@@ -184,7 +184,10 @@ module internal Compiler =
         let compilerArgsArr = ("fsc.exe" :: (compilerArgs |> List.rev)) |> Array.ofList
 
         let scs = SimpleSourceCodeServices()
-        let errors, exitCode = scs.Compile compilerArgsArr
+        let errors, exitCode, assembly =
+            match dynamic with
+            | false -> let (a, b) = scs.Compile compilerArgsArr in a, b, None
+            | true -> scs.CompileToDynamicAssembly (compilerArgs |> Array.ofSeq, execute=None)
 
         let warnings =
             errors
@@ -203,7 +206,7 @@ module internal Compiler =
             |> Array.map (fun e -> e.ToString ())
 
         let success = match exitCode with | 0 -> true | _ -> false
-        new DiagnosticResult (success, warnings, errors) :> IDiagnosticResult
+        new DiagnosticResult (success, warnings, errors) :> IDiagnosticResult, assembly
 
     let getProjectReference (project: Project) targetFramework _ incomingReferences (watcher: IFileWatcher) =
         let refs, refsMap = getReferences project targetFramework incomingReferences
@@ -236,22 +239,22 @@ module internal Compiler =
 
             member x.GetDiagnostics () = 
                 run "GetDiagnostics" (withTemp (fun path ->
-                    emit project.Name project.SourceFiles refs path true true false true))
+                    let result, _ = emit project.Name project.SourceFiles refs path true true false true
+                    result))
 
             member x.Load loaderEngine = 
                 run "Load" (fun () ->
                     let path = getTempPath ()
-                    let result = emit project.Name project.SourceFiles refs path true false false true
+                    let result, assembly = emit project.Name project.SourceFiles refs path true false false true
                     match result.Success with
                     | true ->
-                        let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                        loaderEngine.LoadFile assemblyPath
+                        assembly.Value
                     | false ->
                         raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>)))
 
             member x.EmitReferenceAssembly stream = 
                 run "EmitReferenceAssembly" (withTemp (fun path ->
-                    let result = emit project.Name project.SourceFiles refs path false false false false
+                    let result, _ = emit project.Name project.SourceFiles refs path false false false false
                     match result.Success with
                     | true ->
                         let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
@@ -264,7 +267,8 @@ module internal Compiler =
                 run "EmitAssembly" (fun () ->
                     project.SourceFiles
                     |> Seq.iter (fun f -> watcher.WatchFile f |> ignore)
-                    emit project.Name project.SourceFiles refs path true true false false)
+                    let result, _ = emit project.Name project.SourceFiles refs path true true false false
+                    result)
 
             member x.GetSources () =
                 project.SourceFiles
