@@ -16,7 +16,7 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 .nuget\NuGet.exe update -self
 
 :restore
-.nuget\NuGet.exe install FSharpSupport -ExcludeVersion -o packages -nocache -pre
+.nuget\NuGet.exe install YoloDev.FSharp.AspNet -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install FAKE -ExcludeVersion -o packages
 
