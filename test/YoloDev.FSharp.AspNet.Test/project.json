@@ -2,7 +2,7 @@
   "version": "1.0.0-beta2-*",
   "authors": [ "Alxandr" ],
   "dependencies": {
-    "YoloDev.FSharp.AspNet": "",
+    "YoloDev.FSharp.AspNet": { "version": "", "type": "build" },
     "Xunit.KRunner": "1.0.0-*"
   },
   "code": [ "test.fs" ],
