@@ -3,10 +3,9 @@
   "authors": [ "Alxandr" ],
   "dependencies": {
     "YoloDev.FSharp.AspNet": { "version": "", "type": "build" },
-    "YoloDev.FSharp.AspNet.Referenced": "",
     "Xunit.KRunner": "1.0.0-*"
   },
-  "code": [ "test.fs" ],
+  "code": [ "referenced.fs" ],
   "language": {
     "name": "F#",
     "assembly": "YoloDev.FSharp.AspNet",

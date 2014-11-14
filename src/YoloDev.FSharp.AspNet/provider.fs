@@ -34,11 +34,29 @@ module internal Compiler =
         let l = new obj ()
         lock l fn
 
-    //let tprintf fmt = Printf.ksprintf System.Diagnostics.Trace.Write fmt
+//    let tprintf fmt = Printf.ksprintf System.Diagnostics.Trace.Write fmt
     let tprintf _ = ignore
 
-    //let tprintfn fmt = Printf.ksprintf System.Console.Out.WriteLine fmt
     let tprintfn _ = ignore
+//    let tprintfn fmt =
+//        if System.Diagnostics.Debugger.IsAttached then
+//            Printf.ksprintf System.Console.Out.WriteLine fmt
+//        else
+//            Printf.ksprintf ignore fmt
+
+    let wrap (ms: MemoryStream) =
+        { new Stream() with
+            member s.CanRead with get () = ms.CanRead
+            member s.CanWrite with get () = ms.CanWrite
+            member s.CanSeek with get () = ms.CanSeek
+            member s.Length with get () = ms.Length
+            member s.Position with get () = ms.Position and set v = ms.Position <- v
+            member s.Flush () = ms.Flush ()
+            member s.Seek (offset, loc) = ms.Seek (offset, loc)
+            member s.SetLength l = ms.SetLength l
+            member s.Read (buffer, offset, count) = ms.Read (buffer, offset, count)
+            member s.Write (buffer, offset, count) = ms.Write (buffer, offset, count)
+            member s.Dispose managed = () }
 
     let getReferences _ _ incomingReferences =
         //let name = project.Name
@@ -71,14 +89,20 @@ module internal Compiler =
     let makeStream = function
         | FileMetadataReference f -> File.OpenRead f :> Stream
         | ImageMetadataReference (_, a) -> new MemoryStream (a) :> Stream
-        | ProjectMetadataReference (_, a) -> let ms = new MemoryStream () in a ms; ms :> Stream
+        | ProjectMetadataReference (_, a) -> 
+            let ms = new MemoryStream ()
+            a ms
+            ms :> Stream
 
     let makeByteArray = function
         | FileMetadataReference f -> File.ReadAllBytes f
         | ImageMetadataReference (_, a) -> a
-        | ProjectMetadataReference (_, a) -> use ms = new MemoryStream () in a ms; ms.ToArray ()
+        | ProjectMetadataReference (_, a) ->
+            use ms = new MemoryStream ()
+            a ms
+            ms.ToArray ()
 
-    let makeFs refs =
+    let makeFs refs outputs =
         let defaultFileSystem = Shim.FileSystem
         { new IFileSystem with
             // Implement the service to open files for reading and writing
@@ -89,12 +113,28 @@ module internal Compiler =
                 | _ -> defaultFileSystem.FileStreamReadShim name
 
             member fs.FileStreamCreateShim name =
+//                if System.Diagnostics.Debugger.IsAttached then System.Diagnostics.Debugger.Break ()
                 tprintfn "FileStreamCreateShim: %s" name
-                defaultFileSystem.FileStreamCreateShim name
+                match outputs with
+                | Some (projName, dll, pdb) when Path.GetFileNameWithoutExtension name = projName ->
+                    match Path.GetExtension name with
+                    | ".dll" -> dll
+                    | ".pdb" -> pdb
+                    | _ -> raise (new System.NotImplementedException ())
+                | None ->
+                    defaultFileSystem.FileStreamCreateShim name
 
             member fs.FileStreamWriteExistingShim name =
+//                if System.Diagnostics.Debugger.IsAttached then System.Diagnostics.Debugger.Break ()
                 tprintfn "FileStreamWriteExistingShim: %s" name
-                defaultFileSystem.FileStreamWriteExistingShim name
+                match outputs with
+                | Some (projName, dll, pdb) when Path.GetFileNameWithoutExtension name = projName ->
+                    match Path.GetExtension name with
+                    | ".dll" -> dll
+                    | ".pdb" -> pdb
+                    | _ -> raise (new System.NotImplementedException ())
+                | None ->
+                    defaultFileSystem.FileStreamWriteExistingShim name
 
             member fs.ReadAllBytesShim name =
                 tprintfn "ReadAllBytesShim: %s" name
@@ -129,8 +169,16 @@ module internal Compiler =
                 Map.containsKey name refs || defaultFileSystem.SafeExists name
 
             member fs.FileDelete name =
+//                if System.Diagnostics.Debugger.IsAttached then System.Diagnostics.Debugger.Break ()
                 tprintfn "FileDelete: %s" name
-                defaultFileSystem.FileDelete name
+                match outputs with
+                | Some (projName, dll, pdb) when Path.GetFileNameWithoutExtension name = projName ->
+                    match Path.GetExtension name with
+                    | ".dll" -> ()
+                    | ".pdb" -> ()
+                    | _ -> raise (new System.NotImplementedException ())
+                | None ->
+                    defaultFileSystem.FileDelete name
 
             // Implement the service related to assembly loading, used to load type providers
             // and for F# interactive.
@@ -146,18 +194,24 @@ module internal Compiler =
     let param name value = sprintf "--%s:%s" name value
 
     let emit name sources refs outputPath emitPdb emitDocFile emitExe _ =
-        Directory.CreateDirectory outputPath |> ignore
-        let outExt ext = Path.Combine [|outputPath; name + ext|]
-        let outputDll = outExt (if emitExe then ".exe" else ".dll")
+        let outExt, outputDll =
+            match System.String.IsNullOrEmpty outputPath with
+            | true -> 
+                let outExt ext = name + ext
+                outExt, outExt (if emitExe then ".exe" else ".dll")
+            | false ->
+                Directory.CreateDirectory outputPath |> ignore
+                let outExt ext = Path.Combine [|outputPath; name + ext|]
+                outExt, outExt (if emitExe then ".exe" else ".dll")
 
-        let compilerArgs = [(param "out" outputDll); "--target:" + (if emitExe then "exe" else "library"); "--noframework"]
+        let compilerArgs = [(param "out" outputDll); "--target:" + (if emitExe then "exe" else "library"); "--noframework"; "--optimize-"]
 
         let compilerArgs = 
             match emitPdb with
             | false -> compilerArgs
             | true ->
                 let pdb = outExt ".pdb"
-                (param "pdb" pdb) :: "--debug" :: compilerArgs
+                (param "pdb" pdb)  :: "--debug" :: compilerArgs
 
         let compilerArgs =
             match emitDocFile with
@@ -207,15 +261,26 @@ module internal Compiler =
 
     let getProjectReference (project: Project) targetFramework _ incomingReferences (watcher: IFileWatcher) =
         let refs, refsMap = getReferences project targetFramework incomingReferences
-        let fs = makeFs refsMap
 
         let run name fn =
-            //System.Diagnostics.Debugger.Launch () |> ignore
+//            System.Diagnostics.Debugger.Launch () |> ignore
             lock (fun () ->
                 tprintfn "%s" name
                 let defaultFileSystem = Shim.FileSystem
-                Shim.FileSystem <- fs
+                Shim.FileSystem <- (makeFs refsMap None)
                 let result = fn ()
+                Shim.FileSystem <- defaultFileSystem
+                result)
+
+        let runInMemory name fn =
+//            System.Diagnostics.Debugger.Launch () |> ignore
+            lock (fun () ->
+                tprintfn "in-memory: %s" name
+                use dllStream = new MemoryStream()
+                use pdbStream = new MemoryStream()
+                let defaultFileSystem = Shim.FileSystem
+                Shim.FileSystem <- (makeFs refsMap (Some (project.Name, dllStream |> wrap, pdbStream |> wrap)))
+                let result = fn dllStream pdbStream
                 Shim.FileSystem <- defaultFileSystem
                 result)
 
@@ -239,26 +304,27 @@ module internal Compiler =
                     emit project.Name project.SourceFiles refs path true true false true))
 
             member x.Load loaderEngine = 
-                run "Load" (fun () ->
-                    let path = getTempPath ()
-                    let result = emit project.Name project.SourceFiles refs path true false false true
+                runInMemory "Load" (fun dll pdb ->
+                    // TODO: Re-enable pdbs
+                    let result = emit project.Name project.SourceFiles refs "" false false false true
                     match result.Success with
                     | true ->
-                        let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                        loaderEngine.LoadFile assemblyPath
+                        match pdb.Length with
+                        | 0L -> loaderEngine.LoadStream ((dll :> Stream), null)
+                        | _ -> loaderEngine.LoadStream ((dll :> Stream), (pdb :> Stream))
                     | false ->
                         raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>)))
 
             member x.EmitReferenceAssembly stream = 
-                run "EmitReferenceAssembly" (withTemp (fun path ->
-                    let result = emit project.Name project.SourceFiles refs path false false false false
+//                System.Diagnostics.Debugger.Launch () |> ignore
+                runInMemory "EmitReferenceAssembly" (fun dll pdb ->
+                    let result = emit project.Name project.SourceFiles refs "" false false false true
                     match result.Success with
                     | true ->
-                        let assemblyPath = Path.Combine [|path; project.Name + ".dll"|]
-                        use fs = File.OpenRead assemblyPath
-                        fs.CopyTo stream
+                        dll.Seek (0L, SeekOrigin.Begin)
+                        dll.CopyTo stream
                     | false ->
-                        raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>))))
+                        raise (new CompilationException (result.Errors |> Array.ofSeq :> System.Collections.Generic.IList<string>)))
 
             member x.EmitAssembly path =
                 run "EmitAssembly" (fun () ->
