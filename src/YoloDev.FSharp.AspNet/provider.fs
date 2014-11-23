@@ -13,26 +13,22 @@ module Helpers =
 
 [<NoEquality; NoComparison>]
 type internal MetadataReference =
-| FileMetadataReference of string
-| ImageMetadataReference of string * byte array
-| ProjectMetadataReference of string * (Stream -> unit)
-with
-    member r.VirtPath 
-        with get () =
-            match r with
-            | FileMetadataReference f -> f
-            | ImageMetadataReference (p, _) -> p
-            | ProjectMetadataReference (p, _) -> p
+    | FileMetadataReference of string
+    | ImageMetadataReference of string * byte array
+    | ProjectMetadataReference of string * (Stream -> unit)
 
-[<CompilationRepresentationAttribute(CompilationRepresentationFlags.ModuleSuffix)>]
+[<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
 module internal MetadataReference =
-    let virtPath (p: MetadataReference) = p.VirtPath
+    let virtPath = function
+        | FileMetadataReference f -> f
+        | ImageMetadataReference (p, _) -> p
+        | ProjectMetadataReference (p, _) -> p
 
 open Helpers
+
 module internal Compiler =
-    let lock fn =
-        let l = new obj ()
-        lock l fn
+    let private l = obj()
+    let private lock f = lock l f
 
 //    let tprintf fmt = Printf.ksprintf System.Diagnostics.Trace.Write fmt
     let tprintf _ = ignore
@@ -230,10 +226,10 @@ module internal Compiler =
         // - Assembly neutral references
         // Each IMetadaReference maps to an assembly
         let compilerArgs =
-            let refs = refs |> List.map MetadataReference.virtPath
-            let refs = refs |> List.map (fun r -> "-r:" + r)
-
-            refs @ compilerArgs
+            refs 
+            |> List.map MetadataReference.virtPath
+            |> List.map (fun r -> "-r:" + r)
+            @ compilerArgs
 
         let compilerArgsArr = ("fsc.exe" :: (compilerArgs |> List.rev)) |> Array.ofList
 
