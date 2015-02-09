@@ -59,7 +59,7 @@ Target "Install KRE" (fun _ ->
             match String.IsNullOrWhiteSpace home with
             | false -> home
             | true ->
-                (Environment.GetFolderPath (Environment.SpecialFolder.ProgramFiles) @@ "KRE") + ";%USERPROFILE%\\.kre"
+                (Environment.GetFolderPath (Environment.SpecialFolder.ProgramFiles) @@ "KRE") + ";%USERPROFILE%\\.k"
 
         let rec find globPaths paths =
             match paths with
@@ -67,7 +67,7 @@ Target "Install KRE" (fun _ ->
                 match globPaths with
                 | [] -> failwith "KRE not found"
                 | h :: t ->
-                    let path = (Environment.ExpandEnvironmentVariables h) @@ "packages"
+                    let path = (Environment.ExpandEnvironmentVariables h) @@ "runtimes"
                     match Directory.Exists path with
                     | true ->
                         let dirs = Directory.GetDirectories (path, "KRE-*", SearchOption.TopDirectoryOnly) |> List.ofArray
@@ -108,7 +108,7 @@ Target "Prepare" (fun _ ->
 
 let build n =
     let path = sprintf "%s;%s;%s" !krePath (!krePath @@ "lib" @@ "Microsoft.Framework.PackageManager") (pass n)
-    klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "build"]
+    klr proj ["--lib"; path; "Microsoft.Framework.PackageManager"; "pack"]
 
 let copy n =
     Copy (pass n) !!(proj @@ "bin" @@ "debug" @@ "aspnet50" @@ "YoloDev.FSharp.AspNet.*")
@@ -120,17 +120,19 @@ Target "Pass 1" (fun _ ->
     with
         | _ ->
             trace "Fowler broke my shit, bootstrapping"
-            nuget root ["install"; "YoloDev.UnpaK"; "-ExcludeVersion"; "-o"; "packages"; "-nocache"; "-pre"]
-            let unpakPath = packages @@ "YoloDev.UnpaK" @@ "lib" @@ "aspnet50"
+            //nuget root ["install"; "YoloDev.UnpaK"; "-ExcludeVersion"; "-o"; "packages"; "-nocache"; "-pre"]
+            //let unpakPath = packages @@ "YoloDev.UnpaK" @@ "lib" @@ "aspnet50"
             let bootstrap = obj @@ "bootstrap"
             let bin = bootstrap @@ "bin"
             CreateDir bootstrap
-            klr proj ["--lib"; sprintf "%s;%s" !krePath unpakPath; "YoloDev.UnpaK"; "-o"; bootstrap]
+            //klr proj ["--lib"; !krePath; "YoloDev.UnpaK"; "-o"; bootstrap]
+            exec proj "k" ["YoloDev.UnpaK"; "raw"; "-o"; bootstrap]
             CreateDir bin
             let sources = File.ReadAllLines (bootstrap @@ "sources.txt") |> List.ofArray
             let refs = File.ReadAllLines (bootstrap @@ "references.txt") |> List.ofArray
+            let anis = File.ReadAllLines (bootstrap @@ "anis.txt") |> List.ofArray
             let out = bin @@ "YoloDev.FSharp.AspNet.dll"
-            let args = ["--out:" + out; "--target:library"; "--debug"; "--noframework"] @ (refs |> List.map (sprintf "--reference:%s"))
+            let args = ["--out:" + out; "--target:library"; "--debug"; "--noframework"] @ (refs |> List.map (sprintf "--reference:%s")) @ (anis |> List.map (sprintf "--reference:%s"))
 
 
             match sources |> fscList args with
@@ -173,7 +175,7 @@ Target "Default" id
     ==> "Pass 1"
     ==> "Pass 2"
     ==> "Pass 3"
-    ==> "Test"
+    //==> "Test"
     ==> "CopyToArtifacts"
     ==> "Default"
 

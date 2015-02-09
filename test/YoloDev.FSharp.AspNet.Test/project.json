@@ -4,7 +4,8 @@
   "dependencies": {
     "YoloDev.FSharp.AspNet": { "version": "", "type": "build" },
     "YoloDev.FSharp.AspNet.Referenced": "",
-    "Xunit.KRunner": "1.0.0-*"
+    "xunit.runner.aspnet": "1.0.0-*",
+    "xunit": "1.0.0-*"
   },
   "code": [ "test.fs" ],
   "language": {
@@ -18,7 +19,7 @@
     }
   },
   "commands": {
-    "run": "Xunit.KRunner",
-    "test": "Xunit.KRunner"
+    "run": "xunit.runner.aspnet",
+    "test": "xunit.runner.aspnet"
   }
 }
