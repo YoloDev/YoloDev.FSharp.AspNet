@@ -126,7 +126,7 @@ Target "Pass 1" (fun _ ->
             let bin = bootstrap @@ "bin"
             CreateDir bootstrap
             //klr proj ["--lib"; !krePath; "YoloDev.UnpaK"; "-o"; bootstrap]
-            exec proj "k" ["YoloDev.UnpaK"; "raw"; "-o"; bootstrap]
+            exec proj (!krePath @@ "k") ["YoloDev.UnpaK"; "raw"; "-o"; bootstrap]
             CreateDir bin
             let sources = File.ReadAllLines (bootstrap @@ "sources.txt") |> List.ofArray
             let refs = File.ReadAllLines (bootstrap @@ "references.txt") |> List.ofArray
