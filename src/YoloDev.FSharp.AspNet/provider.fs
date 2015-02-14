@@ -344,7 +344,7 @@ type public FSharpProjectReferenceProvider(watcher: IFileWatcher) =
     
     interface IProjectReferenceProvider with
 
-        member x.GetProjectReference (project, target, referenceResolver, _) =
+        member x.GetProjectReference (project, target, referenceResolver) =
             let export = referenceResolver.Invoke ()
             let incomingReferences = export.MetadataReferences
 
