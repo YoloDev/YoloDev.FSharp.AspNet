@@ -1,9 +1,7 @@
 YoloDev.FSharp.AspNet
 =============
-![build status](http://img.shields.io/appveyor/ci/Alxandr/yolodev-fsharp-aspnet.svg?style=flat)
-![latest version](http://img.shields.io/myget/yolodev/v/YoloDev.FSharp.AspNet.svg?style=flat)
-![download count](http://img.shields.io/myget/yolodev/dt/YoloDev.FSharp.AspNet.svg?style=flat)
-![repo size](https://reposs.herokuapp.com/?path=YoloDev/YoloDev.FSharp.AspNet&style=flat)
+
+<h1>Project is deprecated, see <a href="https://github.com/YoloDev/YoloDev.Dnx.FSharp">YoloDev.Dnx.FSharp</a>.</h1>
 
 FSharp Support for K
 
